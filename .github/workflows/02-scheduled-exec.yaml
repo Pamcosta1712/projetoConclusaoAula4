@@ -44,19 +44,23 @@ jobs:
 
       #   instalação das dependências
       - name: Instalando dependências
-        run: yarn
+        run: yarn install
 
-      # instalação dos Browsers do Playwright
-      - name: Instalando Browsers do Playwright
-        run: yarn playwright install
+      # executar os testes 
+      - name: Executando testes em Mocha 
+        run: yarn test
 
-      # executar os testes e2e
-      - name: Executando testes e2e
-        run: yarn run e2e
+      #Gera o relatório do Mochawesome
+      - name: Gerando relatório Mochawesome
+        if: always()
+        run: yarn test:report
 
-      - name: Salvando relatórios de testes
+      #Publica o relatório do Mochawesome como artefato do workflow  
+      - name: Salvando relatório Mochawesome como artefato
         uses: actions/upload-artifact@v4
-        if: ${{ always() }}
+        if: always()
         with:
-          path: ./playwright-report
-          name: Relatório de Testes E2E
+          name: relatorio-mochawesome
+          path: mochawesome-report
+  
+        

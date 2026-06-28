@@ -1,102 +1,74 @@
-# CI de Nível 04 - Pipeline Integrada ao Build do Código
 
-# nome da pipeline
-name: 'N4 -Execução Integrada'
+# CI de Nível 04 - Pipeline integrada de testes automatizados com Mocha e Mochawesome
 
-# gatilhos / triggers - regras de disparo
-# gatilho manual = workflow_dispatch
-# gatilho agendado = schedule
-# gatilho por conclusão de outra pipeline = workflow_run
+# Nome exibido na aba Actions do GitHub
+name: N4 - Execução Integrada
 
+# Gatilhos de execução da pipeline
 on:
+  # Permite executar manualmente pela aba Actions do GitHub
   workflow_dispatch:
 
+  # Executa automaticamente quando houver push na branch main ou master
   push:
     branches:
+      - main
       - master
-#tarefas dentro da pipeline = jobs
 
+  # Executa automaticamente de forma agendada
+  schedule:
+    # Executa toda segunda-feira às 12h UTC
+    - cron: "0 12 * * 1"
+
+# Jobs da pipeline
 jobs:
-  #nome do job
-  inspecao:
-    # maquina onde o job vai rodar
+  testes-integrados:
+    # Nome do job exibido na execução
+    name: Executar testes e publicar relatório
+
+    # Máquina virtual onde o job será executado
     runs-on: ubuntu-latest
 
-    # passos do job
+    # Etapas executadas dentro do job
     steps:
-      # clone do projeto
-      - uses: actions/checkout@v4
+      # Baixa o código do repositório para a máquina da pipeline
+      - name: Clonando repositório
+        uses: actions/checkout@v4
 
-      # instalção do node
-      - uses: actions/setup-node@v4
+      # Configura o Node.js necessário para executar o projeto JavaScript
+      - name: Configurando Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: latest
+          node-version: 20.x
+          cache: yarn
 
-      # instalação do Yarn
+      # Instala o Yarn na máquina da pipeline
       - name: Instalando Yarn
         run: npm install -g yarn
 
-      # instalação das dependências
+      # Instala as dependências do projeto com base no package.json e yarn.lock
       - name: Instalando dependências
-        run: yarn
+        run: yarn install --frozen-lockfile
 
-      - name: Inspeção de Código
-        run: yarn lint
+      # Executa os testes automatizados com Mocha e gera o relatório com Mochawesome
+      - name: Executando testes com Mocha e gerando relatório Mochawesome
+        run: yarn test:report
 
-  unidade:
-    runs-on: ubuntu-latest
-    needs: [inspecao]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: latest
-
-      - name: Instalando Yarn
-        run: npm install -g yarn
-
-      - name: Instalando dependências
-        run: yarn
-
-      - name: Rodando testes unitários
-        run: yarn run test
-
-  e2e-tests:
-    runs-on: ubuntu-latest
-    needs: [inspecao]
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: latest
-
-      - name: Instalando Yarn
-        run: npm install -g yarn
-
-      - name: Instalando dependências
-        run: yarn
-
-      - name: Instalando Browsers do Playwright
-        run: yarn playwright install
-
-      - name: Executando testes E2E
-        run: yarn run e2e
-
-      - name: Salvando relatórios de testes
+      # Publica o relatório gerado como artefato da execução da pipeline
+      - name: Publicando relatório Mochawesome como artefato
+        if: always()
         uses: actions/upload-artifact@v4
-        if: ${{ always() }}
         with:
-          path: ./playwright-report
-          name: Relatório de Testes E2E
+          name: relatorio-mochawesome-integrado
+          path: mochawesome-report
+          if-no-files-found: error
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: [unidade, e2e-tests]
-
-    steps:
-      - name: Simulação de Deploy
-        run: echo 'Deploy sendo realizado...'
+      # Exibe um resumo textual no log da pipeline
+      - name: Resumo da execução integrada
+        if: always()
+        run: |
+          echo "Pipeline integrada executada com GitHub Actions."
+          echo "Gatilhos contemplados: push, execução manual e schedule."
+          echo "Framework de testes utilizado: Mocha."
+          echo "Relatório de testes utilizado: Mochawesome."
+          echo "Relatório publicado como artefato: relatorio-mochawesome-integrado."
