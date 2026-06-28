@@ -18,7 +18,7 @@ on:
   # Executa automaticamente de forma agendada
   schedule:
     # Executa toda segunda-feira às 12h UTC
-    - cron: "0 * * * *"
+    - cron: "5 * * * *"
 
 # Jobs da pipeline
 jobs:
